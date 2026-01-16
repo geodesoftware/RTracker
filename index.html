@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recipe Atlas</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link rel="apple-touch-icon" href="logo.png" />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink-900: #1c1a1c;
+        --ink-700: #3f3b3f;
+        --ink-500: #6a646a;
+        --paper: #f7f2ea;
+        --cream: #f2e5d5;
+        --rose: #f7c9b7;
+        --coral: #f38f6d;
+        --olive: #7d8b68;
+        --sun: #f5c269;
+        --sky: #cad7de;
+        --card: rgba(255, 255, 255, 0.88);
+        --shadow: 0 18px 40px rgba(28, 26, 28, 0.15);
+        --radius-lg: 26px;
+        --radius-md: 18px;
+        --radius-sm: 12px;
+        --font-body: "Optima", "Avenir Next", "Avenir", "Gill Sans", sans-serif;
+        --font-display: "Baskerville", "Didot", "Garamond", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-weight: 400;
+        font-synthesis-weight: none;
+        color: var(--ink-900);
+        background: radial-gradient(circle at top left, #f7e6d1, var(--paper) 45%) no-repeat,
+          radial-gradient(circle at 85% 0%, #f9d9c6, transparent 40%),
+          radial-gradient(circle at 10% 90%, #d8e2d2, transparent 45%),
+          linear-gradient(135deg, #f7efe4 0%, #f2e7dd 100%);
+        min-height: 100vh;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        z-index: -1;
+        border-radius: 50%;
+        filter: blur(0px);
+      }
+
+      body::before {
+        width: 260px;
+        height: 260px;
+        left: -80px;
+        top: 120px;
+        background: radial-gradient(circle, rgba(243, 143, 109, 0.35), transparent 70%);
+      }
+
+      body::after {
+        width: 320px;
+        height: 320px;
+        right: -120px;
+        bottom: 80px;
+        background: radial-gradient(circle, rgba(125, 139, 104, 0.35), transparent 70%);
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 56px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+      }
+
+      .title-block {
+        max-width: 520px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        object-fit: cover;
+        box-shadow: 0 12px 24px rgba(28, 26, 28, 0.15);
+      }
+
+      h1 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: clamp(1.8rem, 2.6vw, 2.6rem);
+        letter-spacing: 0.04em;
+      }
+
+      .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .search {
+        width: min(280px, 100%);
+        border-radius: 999px;
+        padding: 10px 14px;
+        border: 1px solid rgba(60, 54, 60, 0.18);
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .stat {
+        background: var(--card);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        box-shadow: var(--shadow);
+        min-width: 120px;
+      }
+
+      .stat span {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--ink-500);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .stat strong {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+
+      .sync-status {
+        font-size: 0.85rem;
+        color: var(--ink-500);
+        text-align: center;
+        padding: 20px 0 6px;
+      }
+
+
+      .sync-status[data-tone="ok"] {
+        color: var(--olive);
+      }
+
+      .sync-status[data-tone="error"] {
+        color: #b4553a;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--card);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+
+      .panel h2 {
+        margin: 0 0 16px;
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        font-size: 0.86rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-500);
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(60, 54, 60, 0.15);
+        background: #fff;
+        font-family: var(--font-body);
+        font-weight: 400;
+        font-size: 0.95rem;
+      }
+
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-family: var(--font-body);
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn:active {
+        transform: translateY(1px);
+      }
+
+      .btn.primary {
+        background: var(--coral);
+        color: #1f1411;
+        box-shadow: 0 12px 24px rgba(243, 143, 109, 0.35);
+      }
+
+      .btn.outline {
+        background: transparent;
+        border: 1px solid rgba(63, 59, 63, 0.35);
+        color: var(--ink-700);
+      }
+
+      .btn.ghost {
+        background: rgba(202, 215, 222, 0.6);
+        color: var(--ink-700);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .tab {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        background: rgba(247, 201, 183, 0.6);
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .tab.active {
+        background: var(--ink-900);
+        color: #fff;
+        border-color: var(--ink-900);
+      }
+
+      .table-card {
+        background: var(--card);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .table-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: var(--ink-500);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .filter select {
+        min-width: 180px;
+      }
+
+      .note {
+        color: var(--ink-500);
+        font-size: 0.9rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 12px 10px;
+        border-bottom: 1px solid rgba(60, 54, 60, 0.12);
+        font-size: 0.95rem;
+      }
+
+      th {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: var(--ink-500);
+      }
+
+      .sort-btn {
+        border: none;
+        background: transparent;
+        padding: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        text-transform: inherit;
+        letter-spacing: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .sort-indicator {
+        font-size: 0.7rem;
+        color: var(--ink-700);
+      }
+
+      .recipe-name {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+      }
+
+      .recipe-name:hover {
+        border-bottom-color: var(--coral);
+      }
+
+      .btn.danger {
+        background: #f8d4c7;
+        color: #5a1f12;
+        border: 1px solid rgba(90, 31, 18, 0.2);
+      }
+
+      .fab {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        background: var(--ink-900);
+        color: #fff;
+        font-size: 2rem;
+        cursor: pointer;
+        box-shadow: 0 16px 32px rgba(28, 26, 28, 0.25);
+      }
+
+      .fab:active {
+        transform: translateY(1px);
+      }
+
+      td:last-child {
+        width: 220px;
+      }
+
+      .last-made {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .date-text {
+        min-width: 110px;
+        color: var(--ink-700);
+      }
+
+      .icon-btn {
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+
+      .icon-btn.check {
+        background: rgba(125, 139, 104, 0.25);
+        color: #3e4b2a;
+      }
+
+      .icon-btn.dots {
+        background: rgba(202, 215, 222, 0.6);
+        color: var(--ink-700);
+      }
+
+      .icon-btn.queue {
+        background: rgba(245, 194, 105, 0.35);
+        color: #7a4d15;
+      }
+
+      .icon-btn.delete {
+        background: rgba(248, 212, 199, 0.7);
+        color: #5a1f12;
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .empty {
+        padding: 22px;
+        border-radius: var(--radius-md);
+        background: rgba(202, 215, 222, 0.4);
+        text-align: center;
+        color: var(--ink-500);
+      }
+
+      .card-list {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .recipe-card {
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: var(--radius-md);
+        padding: 14px 16px;
+        border: 1px solid rgba(60, 54, 60, 0.12);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .recipe-card h3 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+      }
+
+      .star-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .star-toggle input {
+        display: none;
+      }
+
+      .star {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 1px solid rgba(60, 54, 60, 0.2);
+        display: grid;
+        place-items: center;
+        font-size: 1.1rem;
+        background: rgba(247, 201, 183, 0.5);
+      }
+
+      .star-toggle input:checked + .star {
+        background: var(--sun);
+        border-color: rgba(60, 54, 60, 0.4);
+      }
+
+      .favorite-mark {
+        font-size: 1rem;
+        color: var(--sun);
+        margin-left: 6px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(245, 194, 105, 0.5);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      dialog {
+        border: none;
+        border-radius: var(--radius-lg);
+        width: min(720px, 92vw);
+        padding: 0;
+        box-shadow: var(--shadow);
+      }
+
+      dialog.fullscreen {
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+      }
+
+      dialog::backdrop {
+        background: rgba(20, 18, 20, 0.4);
+      }
+
+      .modal {
+        padding: 22px;
+        background: #fff;
+        border-radius: var(--radius-lg);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .modal.fullscreen {
+        min-height: 100vh;
+        border-radius: 0;
+        padding: 32px 24px 40px;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 6px;
+      }
+
+      @media (max-width: 960px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        table {
+          display: none;
+        }
+
+        .card-list {
+          display: flex;
+        }
+
+        td:last-child {
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="title-block">
+          <img class="logo" src="logo.png" alt="Recipe Atlas logo" />
+          <h1>Recipe Atlas</h1>
+        </div>
+        <input
+          class="search"
+          id="name-search"
+          type="search"
+          placeholder="Search by name..."
+          aria-label="Search recipes by name"
+        />
+      </header>
+
+      <section class="layout">
+        <div class="table-card">
+          <div class="table-header">
+            <div class="tabs">
+              <button class="tab active" data-tab="all" data-label="All">All (0)</button>
+              <button class="tab" data-tab="ideas" data-label="Ideas">Ideas (0)</button>
+              <button class="tab" data-tab="favorites" data-label="Favorites">Favorites (0)</button>
+              <button class="tab" data-tab="queued" data-label="Queued">Queued (0)</button>
+              <button class="tab" data-tab="suggested" data-label="Suggested">Suggested (0)</button>
+            </div>
+            <div class="table-controls">
+              <label class="filter" for="country-filter">
+                Country
+                <select id="country-filter"></select>
+              </label>
+              <div class="note" id="tab-note">
+                Sorted by most recent last-made date.
+              </div>
+            </div>
+          </div>
+
+          <div id="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>
+                    <button class="sort-btn" data-sort="name" type="button">
+                      Name
+                      <span class="sort-indicator" data-indicator="name"></span>
+                    </button>
+                  </th>
+                  <th>Country</th>
+                  <th>
+                    <button class="sort-btn" data-sort="lastMade" type="button">
+                      Last Made
+                      <span class="sort-indicator" data-indicator="lastMade"></span>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="recipe-table"></tbody>
+            </table>
+            <div class="card-list" id="recipe-cards"></div>
+          </div>
+          <div class="empty" id="empty-state" hidden>No recipes match this view yet.</div>
+        </div>
+      </section>
+
+      <footer class="sync-status" id="sync-status">Sync: local cache</footer>
+    </div>
+
+    <button class="fab" id="open-new" aria-label="Add recipe">+</button>
+
+    <dialog id="new-dialog" class="fullscreen">
+      <form class="modal fullscreen" id="add-form">
+        <div class="modal-header">
+          <h3>New Recipe</h3>
+          <button class="btn ghost" id="new-close" type="button">Close</button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label for="new-name">Name *</label>
+            <input id="new-name" name="name" required />
+          </div>
+          <div>
+            <label for="new-country">Country of Origin *</label>
+            <select id="new-country" name="country" required></select>
+          </div>
+          <div>
+            <label class="star-toggle" for="new-favorite">
+              <input id="new-favorite" name="favorite" type="checkbox" />
+              <span class="star" aria-hidden="true">★</span>
+              Mark as favorite
+            </label>
+          </div>
+          <div>
+            <label for="new-last-made">Last Made Date</label>
+            <input id="new-last-made" name="lastMade" type="date" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn outline" id="new-cancel" type="button">Cancel</button>
+          <button class="btn primary" type="submit">Add Recipe</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="detail-dialog">
+      <form method="dialog" class="modal" id="detail-form">
+        <div class="modal-header">
+          <h3>Recipe Details</h3>
+          <button class="btn ghost" value="cancel" type="submit">Close</button>
+        </div>
+        <input type="hidden" id="detail-id" />
+        <div class="form-grid">
+          <div>
+            <label for="detail-name">Name</label>
+            <input id="detail-name" required />
+          </div>
+          <div>
+            <label for="detail-country">Country of Origin</label>
+            <select id="detail-country" required></select>
+          </div>
+          <div>
+            <label class="star-toggle" for="detail-favorite">
+              <input id="detail-favorite" type="checkbox" />
+              <span class="star" aria-hidden="true">★</span>
+              Mark as favorite
+            </label>
+          </div>
+          <div>
+            <label for="detail-last-made">Last Made Date</label>
+            <input id="detail-last-made" type="date" />
+          </div>
+          <div>
+            <label for="detail-link">Link to Recipe</label>
+            <input id="detail-link" type="url" placeholder="https://..." />
+          </div>
+          <div>
+            <label for="detail-brief">Brief Description</label>
+            <textarea id="detail-brief"></textarea>
+          </div>
+          <div>
+            <label for="detail-full">Full Recipe</label>
+            <textarea id="detail-full"></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn danger" id="detail-delete" type="button">Delete</button>
+          <button class="btn primary" id="detail-save" type="button">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      const STORAGE_KEY = "recipe-atlas-data-v1";
+      const S3_URL = `${window.location.origin}/data/rtracker.json`;
+
+      const setSyncStatus = (text, tone) => {
+        const el = document.getElementById("sync-status");
+        el.textContent = text;
+        if (tone) {
+          el.dataset.tone = tone;
+        } else {
+          el.removeAttribute("data-tone");
+        }
+      };
+
+      const pushToS3 = async (data) => {
+        const payload = {
+          version: 1,
+          updatedAt: new Date().toISOString(),
+          recipes: data,
+        };
+        try {
+          const response = await fetch(S3_URL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          const verification = await loadFromS3();
+          if (verification) {
+            setSyncStatus("Sync: live on S3", "ok");
+            return true;
+          }
+          throw new Error("S3 sync failed: verification read returned no data.");
+        } catch (error) {
+          console.warn(error);
+          const message = error && error.message ? error.message : "unknown error";
+          setSyncStatus(`Sync failed: ${message}`, "error");
+          return false;
+        }
+      };
+
+      const mergeRecipes = (base, incoming) => {
+        const map = new Map();
+        base.forEach((recipe) => {
+          map.set(recipe.id, { ...recipe });
+        });
+        incoming.forEach((recipe) => {
+          map.set(recipe.id, { ...recipe });
+        });
+        return Array.from(map.values());
+      };
+
+      const loadFromS3 = async () => {
+        try {
+          const response = await fetch(`${S3_URL}?t=${Date.now()}`, {
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            setSyncStatus(`Sync read failed: HTTP ${response.status}`, "error");
+            return null;
+          }
+          const payload = await response.json();
+          const data = Array.isArray(payload) ? payload : payload.recipes;
+          if (Array.isArray(data)) {
+            return data;
+          }
+        } catch (error) {
+          console.warn("Failed to load from S3.", error);
+          const message = error && error.message ? error.message : "network error";
+          setSyncStatus(`Sync read failed: ${message}`, "error");
+        }
+        return null;
+      };
+
+      const loadRecipes = async () => {
+        let cached = null;
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            cached = JSON.parse(stored);
+          } catch (error) {
+            console.warn("Failed to parse stored recipes.", error);
+          }
+        }
+        const fromS3 = await loadFromS3();
+        if (fromS3) {
+          const normalized = fromS3.map((recipe) => ({
+            ...recipe,
+            queued: Boolean(recipe.queued),
+          }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+          setSyncStatus("Sync: live on S3", "ok");
+          return normalized;
+        }
+        if (cached) {
+          const normalized = cached.map((recipe) => ({
+            ...recipe,
+            queued: Boolean(recipe.queued),
+          }));
+          setSyncStatus("Sync: local cache");
+          return normalized;
+        }
+        setSyncStatus("Sync: no remote data", "error");
+        return [];
+      };
+
+      let recipes = [];
+      let activeTab = "all";
+      let sortState = { key: "lastMade", dir: "desc" };
+      let filterCountry = "all";
+      let searchQuery = "";
+
+      const elements = {
+        tabButtons: document.querySelectorAll(".tab"),
+        tableBody: document.getElementById("recipe-table"),
+        cardList: document.getElementById("recipe-cards"),
+        emptyState: document.getElementById("empty-state"),
+        note: document.getElementById("tab-note"),
+        countryFilter: document.getElementById("country-filter"),
+        sortButtons: document.querySelectorAll(".sort-btn"),
+        sortIndicators: document.querySelectorAll("[data-indicator]"),
+        nameSearch: document.getElementById("name-search"),
+      };
+
+      const saveRecipes = async (options = {}) => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+        if (!options.force) {
+          const remote = await loadFromS3();
+          const merged = remote ? mergeRecipes(remote, recipes) : recipes;
+          if (remote) {
+            recipes = merged;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+          }
+          await pushToS3(merged);
+          return;
+        }
+        await pushToS3(recipes);
+      };
+
+      const formatDate = (value) => {
+        if (!value) return "—";
+        const date = new Date(value + "T00:00:00");
+        return date.toLocaleDateString("en-US", {
+          year: "2-digit",
+          month: "2-digit",
+          day: "2-digit",
+        });
+      };
+
+      const escapeHtml = (value) => {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll("\"", "&quot;")
+          .replaceAll("'", "&#39;");
+      };
+
+      const normalizeLink = (value) => {
+        if (!value) return "";
+        try {
+          const url = new URL(value, window.location.origin);
+          if (url.protocol === "http:" || url.protocol === "https:") {
+            return url.href;
+          }
+        } catch (error) {
+          return "";
+        }
+        return "";
+      };
+
+      const getDateSortValue = (value, direction) => {
+        if (!value) {
+          return direction === "asc" ? Infinity : -Infinity;
+        }
+        return new Date(value).getTime();
+      };
+
+      const sortRecipes = (list) => {
+        const { key, dir } = sortState;
+        const direction = dir === "asc" ? 1 : -1;
+        return [...list].sort((a, b) => {
+          if (key === "name") {
+            return direction * a.name.localeCompare(b.name);
+          }
+          const aTime = getDateSortValue(a.lastMade, dir);
+          const bTime = getDateSortValue(b.lastMade, dir);
+          return direction * (aTime - bTime);
+        });
+      };
+
+      const getSuggested = () => {
+        const now = new Date();
+        const olderThan = 30;
+        const favorites = recipes.filter((recipe) => recipe.category === "favorite");
+        const suggested = favorites.filter((recipe) => {
+          if (!recipe.lastMade) return false;
+          const lastDate = new Date(recipe.lastMade + "T00:00:00");
+          const days = (now - lastDate) / (1000 * 60 * 60 * 24);
+          return days > olderThan;
+        });
+        return suggested;
+      };
+
+      const getVisibleRecipes = () => {
+        let base = [];
+        if (activeTab === "ideas") {
+          base = recipes.filter((r) => r.category === "idea");
+        } else if (activeTab === "favorites") {
+          base = recipes.filter((r) => r.category === "favorite");
+        } else if (activeTab === "queued") {
+          base = recipes.filter((r) => r.queued);
+        } else if (activeTab === "all") {
+          base = recipes;
+        } else {
+          base = getSuggested();
+        }
+        if (filterCountry !== "all") {
+          base = base.filter((recipe) => recipe.country === filterCountry);
+        }
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          base = base.filter((recipe) => recipe.name.toLowerCase().includes(query));
+        }
+        return sortRecipes(base);
+      };
+
+      const updateCounts = () => {
+        const total = recipes.length;
+        const ideas = recipes.filter((r) => r.category === "idea").length;
+        const favorites = recipes.filter((r) => r.category === "favorite").length;
+        const queued = recipes.filter((r) => r.queued).length;
+        const suggested = getSuggested().length;
+        elements.tabButtons.forEach((button) => {
+          const label = button.dataset.label || button.textContent;
+          let count = total;
+          if (button.dataset.tab === "ideas") count = ideas;
+          if (button.dataset.tab === "favorites") count = favorites;
+          if (button.dataset.tab === "queued") count = queued;
+          if (button.dataset.tab === "suggested") count = suggested;
+          button.textContent = `${label} (${count})`;
+        });
+      };
+
+      const updateNote = () => {
+        if (activeTab === "suggested") {
+          elements.note.textContent = "Favorites last made more than 30 days ago.";
+        } else if (activeTab === "queued") {
+          elements.note.textContent = "Queued recipes for your next cook.";
+        } else {
+          elements.note.textContent = "Sorted by your selected column.";
+        }
+      };
+
+      const updateCountryOptions = () => {
+        const countrySet = new Set(
+          recipes
+            .map((recipe) => recipe.country)
+            .filter((country) => typeof country === "string" && country.trim().length)
+            .map((country) => country.trim())
+        );
+        const countries = Array.from(countrySet).sort((a, b) => a.localeCompare(b));
+        const selects = [
+          document.getElementById("new-country"),
+          document.getElementById("detail-country"),
+        ];
+        selects.forEach((select) => {
+          const currentValue = select.value;
+          select.innerHTML = "";
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = "Select a country";
+          select.appendChild(placeholder);
+          countries.forEach((country) => {
+            const option = document.createElement("option");
+            option.value = country;
+            option.textContent = country;
+            select.appendChild(option);
+          });
+          if (currentValue) {
+            select.value = currentValue;
+          }
+        });
+
+        const filterSelect = elements.countryFilter;
+        const filterValue = filterSelect.value || filterCountry;
+        filterSelect.innerHTML = "";
+        const allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = "All countries";
+        filterSelect.appendChild(allOption);
+        countries.forEach((country) => {
+          const option = document.createElement("option");
+          option.value = country;
+          option.textContent = country;
+          filterSelect.appendChild(option);
+        });
+        filterSelect.value = filterValue && countries.includes(filterValue) ? filterValue : "all";
+        filterCountry = filterSelect.value;
+      };
+
+      const updateSortIndicators = () => {
+        elements.sortIndicators.forEach((indicator) => {
+          const key = indicator.dataset.indicator;
+          if (key !== sortState.key) {
+            indicator.textContent = "";
+            return;
+          }
+          indicator.textContent = sortState.dir === "asc" ? "▲" : "▼";
+        });
+      };
+
+      const getFavoriteMark = (recipe) => {
+        if (recipe.category !== "favorite") return "";
+        return '<span class="favorite-mark" aria-label="favorite">★</span>';
+      };
+
+      const getNameHtml = (recipe) => {
+        const name = escapeHtml(recipe.name);
+        const description = recipe.briefDescription
+          ? escapeHtml(recipe.briefDescription)
+          : "";
+        const link = normalizeLink(recipe.link);
+        const titleAttr = description ? ` title="${description}"` : "";
+        if (link) {
+          return `<a class="recipe-name" href="${escapeHtml(link)}" target="_blank" rel="noopener"${titleAttr}>${name}</a>`;
+        }
+        return `<span class="recipe-name"${titleAttr}>${name}</span>`;
+      };
+
+      const renderRecipes = () => {
+        const visible = getVisibleRecipes();
+        elements.tableBody.innerHTML = "";
+        elements.cardList.innerHTML = "";
+
+        if (!visible.length) {
+          elements.emptyState.hidden = false;
+          return;
+        }
+        elements.emptyState.hidden = true;
+
+        for (const recipe of visible) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${getNameHtml(recipe)}${getFavoriteMark(recipe)}</td>
+            <td>${recipe.country}</td>
+            <td>
+              <div class="last-made">
+                <span class="date-text">${formatDate(recipe.lastMade)}</span>
+                <button class="icon-btn check" data-action="today" data-id="${recipe.id}" title="Set to today" aria-label="Set last made to today">
+                  ✓
+                </button>
+                <button class="icon-btn dots" data-action="details" data-id="${recipe.id}" title="Details" aria-label="View details">
+                  ⋯
+                </button>
+                <button class="icon-btn queue" data-action="queue" data-id="${recipe.id}" title="Add to queue" aria-label="Add to queue">
+                  +
+                </button>
+                <button class="icon-btn delete" data-action="delete" data-id="${recipe.id}" title="Delete" aria-label="Delete recipe">
+                  ×
+                </button>
+              </div>
+            </td>
+          `;
+          elements.tableBody.appendChild(row);
+
+          const card = document.createElement("div");
+          card.className = "recipe-card";
+          card.innerHTML = `
+            <h3>${getNameHtml(recipe)}${getFavoriteMark(recipe)}</h3>
+            <div>Country: <strong>${recipe.country}</strong></div>
+            <div>Last made: <strong>${formatDate(recipe.lastMade)}</strong></div>
+            <div class="row-actions">
+              <button class="icon-btn check" data-action="today" data-id="${recipe.id}" title="Set to today" aria-label="Set last made to today">
+                ✓
+              </button>
+              <button class="icon-btn dots" data-action="details" data-id="${recipe.id}" title="Details" aria-label="View details">
+                ⋯
+              </button>
+              <button class="icon-btn queue" data-action="queue" data-id="${recipe.id}" title="Add to queue" aria-label="Add to queue">
+                +
+              </button>
+              <button class="icon-btn delete" data-action="delete" data-id="${recipe.id}" title="Delete" aria-label="Delete recipe">
+                ×
+              </button>
+            </div>
+          `;
+          elements.cardList.appendChild(card);
+        }
+      };
+
+      const refresh = () => {
+        updateCounts();
+        updateNote();
+        updateCountryOptions();
+        updateSortIndicators();
+        renderRecipes();
+      };
+
+      elements.tabButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          activeTab = button.dataset.tab;
+          elements.tabButtons.forEach((btn) => btn.classList.remove("active"));
+          button.classList.add("active");
+          refresh();
+        });
+      });
+
+      elements.sortButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const key = button.dataset.sort;
+          if (sortState.key === key) {
+            sortState.dir = sortState.dir === "asc" ? "desc" : "asc";
+          } else {
+            sortState.key = key;
+            sortState.dir = key === "name" ? "asc" : "desc";
+          }
+          refresh();
+        });
+      });
+
+      elements.countryFilter.addEventListener("change", (event) => {
+        filterCountry = event.target.value;
+        refresh();
+      });
+
+      elements.nameSearch.addEventListener("input", (event) => {
+        searchQuery = event.target.value.trim();
+        refresh();
+      });
+
+      document.getElementById("table-wrapper").addEventListener("click", (event) => {
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
+        const action = target.dataset.action;
+        const id = target.dataset.id;
+        if (!action || !id) return;
+        if (action === "today") {
+          const today = new Date().toISOString().slice(0, 10);
+          const recipe = recipes.find((item) => item.id === id);
+          if (recipe) {
+            recipe.lastMade = today;
+            recipe.queued = false;
+            void saveRecipes();
+            refresh();
+          }
+        }
+        if (action === "details") {
+          openDetailDialog(id);
+        }
+        if (action === "queue") {
+          const recipe = recipes.find((item) => item.id === id);
+          if (recipe) {
+            recipe.queued = true;
+            void saveRecipes();
+            refresh();
+          }
+        }
+        if (action === "delete") {
+          const recipe = recipes.find((item) => item.id === id);
+          if (!recipe) return;
+          const confirmed = window.confirm(`Delete "${recipe.name}"?`);
+          if (!confirmed) return;
+          recipes = recipes.filter((item) => item.id !== id);
+          void saveRecipes({ force: true });
+          refresh();
+        }
+      });
+
+      const addForm = document.getElementById("add-form");
+      const newDialog = document.getElementById("new-dialog");
+      const openNew = document.getElementById("open-new");
+      const newClose = document.getElementById("new-close");
+      const newCancel = document.getElementById("new-cancel");
+
+      const closeNewDialog = () => {
+        newDialog.close();
+        addForm.reset();
+      };
+
+      openNew.addEventListener("click", () => {
+        updateCountryOptions();
+        newDialog.showModal();
+      });
+
+      newClose.addEventListener("click", closeNewDialog);
+      newCancel.addEventListener("click", closeNewDialog);
+
+      addForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const formData = new FormData(addForm);
+        const name = formData.get("name").trim();
+        const country = formData.get("country").trim();
+        const category = formData.get("favorite") ? "favorite" : "idea";
+        if (!name || !country) return;
+        recipes.unshift({
+          id: `user-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          name,
+          country,
+          category,
+          lastMade: formData.get("lastMade") || "",
+          briefDescription: "",
+          fullRecipe: "",
+          link: "",
+          queued: false,
+        });
+        void saveRecipes();
+        closeNewDialog();
+        activeTab = "all";
+        elements.tabButtons.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.tab === activeTab);
+        });
+        refresh();
+      });
+
+      const detailDialog = document.getElementById("detail-dialog");
+      const detailSave = document.getElementById("detail-save");
+      const detailDelete = document.getElementById("detail-delete");
+
+      const openDetailDialog = (id) => {
+        const recipe = recipes.find((item) => item.id === id);
+        if (!recipe) return;
+        updateCountryOptions();
+        document.getElementById("detail-id").value = recipe.id;
+        document.getElementById("detail-name").value = recipe.name;
+        document.getElementById("detail-country").value = recipe.country;
+        document.getElementById("detail-favorite").checked = recipe.category === "favorite";
+        document.getElementById("detail-last-made").value = recipe.lastMade || "";
+        document.getElementById("detail-link").value = recipe.link || "";
+        document.getElementById("detail-brief").value = recipe.briefDescription || "";
+        document.getElementById("detail-full").value = recipe.fullRecipe || "";
+        detailDialog.showModal();
+      };
+
+      detailSave.addEventListener("click", () => {
+        const id = document.getElementById("detail-id").value;
+        const recipe = recipes.find((item) => item.id === id);
+        if (!recipe) return;
+        recipe.name = document.getElementById("detail-name").value.trim();
+        recipe.country = document.getElementById("detail-country").value.trim();
+        recipe.category = document.getElementById("detail-favorite").checked
+          ? "favorite"
+          : "idea";
+        recipe.lastMade = document.getElementById("detail-last-made").value;
+        if (recipe.lastMade) {
+          recipe.queued = false;
+        }
+        recipe.link = document.getElementById("detail-link").value.trim();
+        recipe.briefDescription = document.getElementById("detail-brief").value.trim();
+        recipe.fullRecipe = document.getElementById("detail-full").value.trim();
+        void saveRecipes();
+        detailDialog.close();
+        refresh();
+      });
+
+      detailDelete.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = document.getElementById("detail-id").value;
+        const recipe = recipes.find((item) => item.id === id);
+        if (!recipe) return;
+        const confirmed = window.confirm(`Delete "${recipe.name}"?`);
+        if (!confirmed) return;
+        recipes = recipes.filter((item) => item.id !== id);
+        void saveRecipes({ force: true });
+        detailDialog.close();
+        refresh();
+      });
+
+      const init = async () => {
+        recipes = await loadRecipes();
+        refresh();
+      };
+
+      init();
+    </script>
+  </body>
+</html>
