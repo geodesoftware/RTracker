@@ -362,10 +362,22 @@
         border: 1px solid rgba(90, 31, 18, 0.2);
       }
 
-      .fab {
+      .floating-controls {
         position: fixed;
         right: 24px;
         bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10;
+      }
+
+      .floating-controls .search {
+        width: min(300px, 56vw);
+        box-shadow: 0 12px 24px rgba(28, 26, 28, 0.12);
+      }
+
+      .fab {
         width: 60px;
         height: 60px;
         border-radius: 50%;
@@ -420,6 +432,11 @@
       .icon-btn.queue {
         background: rgba(245, 194, 105, 0.35);
         color: #7a4d15;
+      }
+
+      .icon-btn.unqueue {
+        background: rgba(202, 215, 222, 0.6);
+        color: #4b5a66;
       }
 
       .icon-btn.delete {
@@ -580,6 +597,17 @@
         td:last-child {
           width: auto;
         }
+
+        .floating-controls {
+          left: 16px;
+          right: 16px;
+          justify-content: space-between;
+        }
+
+        .floating-controls .search {
+          width: auto;
+          flex: 1;
+        }
       }
     </style>
   </head>
@@ -590,13 +618,6 @@
           <img class="logo" src="logo.png" alt="Recipe Atlas logo" />
           <h1>Recipe Atlas</h1>
         </div>
-        <input
-          class="search"
-          id="name-search"
-          type="search"
-          placeholder="Search by name..."
-          aria-label="Search recipes by name"
-        />
       </header>
 
       <section class="layout">
@@ -650,7 +671,16 @@
       <footer class="sync-status" id="sync-status">Sync: local cache</footer>
     </div>
 
-    <button class="fab" id="open-new" aria-label="Add recipe">+</button>
+    <div class="floating-controls">
+      <input
+        class="search"
+        id="name-search"
+        type="search"
+        placeholder="Search by name..."
+        aria-label="Search recipes by name"
+      />
+      <button class="fab" id="open-new" aria-label="Add recipe">+</button>
+    </div>
 
     <dialog id="new-dialog" class="fullscreen">
       <form class="modal fullscreen" id="add-form">
@@ -1095,6 +1125,9 @@
                 <button class="icon-btn queue" data-action="queue" data-id="${recipe.id}" title="Add to queue" aria-label="Add to queue">
                   +
                 </button>
+                <button class="icon-btn unqueue" data-action="unqueue" data-id="${recipe.id}" title="Remove from queue" aria-label="Remove from queue">
+                  -
+                </button>
                 <button class="icon-btn delete" data-action="delete" data-id="${recipe.id}" title="Delete" aria-label="Delete recipe">
                   ×
                 </button>
@@ -1118,6 +1151,9 @@
               </button>
               <button class="icon-btn queue" data-action="queue" data-id="${recipe.id}" title="Add to queue" aria-label="Add to queue">
                 +
+              </button>
+              <button class="icon-btn unqueue" data-action="unqueue" data-id="${recipe.id}" title="Remove from queue" aria-label="Remove from queue">
+                -
               </button>
               <button class="icon-btn delete" data-action="delete" data-id="${recipe.id}" title="Delete" aria-label="Delete recipe">
                 ×
@@ -1191,6 +1227,14 @@
           const recipe = recipes.find((item) => item.id === id);
           if (recipe) {
             recipe.queued = true;
+            void saveRecipes();
+            refresh();
+          }
+        }
+        if (action === "unqueue") {
+          const recipe = recipes.find((item) => item.id === id);
+          if (recipe) {
+            recipe.queued = false;
             void saveRecipes();
             refresh();
           }
