@@ -186,6 +186,21 @@
         gap: 12px;
       }
 
+      .inline-input {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .inline-input select {
+        flex: 1;
+      }
+
+      .add-country {
+        background: rgba(202, 215, 222, 0.6);
+        color: var(--ink-700);
+      }
+
       label {
         font-size: 0.86rem;
         text-transform: uppercase;
@@ -432,6 +447,11 @@
       .icon-btn.queue {
         background: rgba(245, 194, 105, 0.35);
         color: #7a4d15;
+      }
+
+      .icon-btn.favorite {
+        background: rgba(245, 194, 105, 0.45);
+        color: #7a5a1c;
       }
 
       .icon-btn.unqueue {
@@ -695,7 +715,12 @@
           </div>
           <div>
             <label for="new-country">Country of Origin *</label>
-            <select id="new-country" name="country" required></select>
+            <div class="inline-input">
+              <select id="new-country" name="country" required></select>
+              <button class="icon-btn add-country" id="new-country-add" type="button" aria-label="Add a new country">
+                +
+              </button>
+            </div>
           </div>
           <div>
             <label class="star-toggle" for="new-favorite">
@@ -730,7 +755,12 @@
           </div>
           <div>
             <label for="detail-country">Country of Origin</label>
-            <select id="detail-country" required></select>
+            <div class="inline-input">
+              <select id="detail-country" required></select>
+              <button class="icon-btn add-country" id="detail-country-add" type="button" aria-label="Add a new country">
+                +
+              </button>
+            </div>
           </div>
           <div>
             <label class="star-toggle" for="detail-favorite">
@@ -938,6 +968,22 @@
         return "";
       };
 
+      const addCountryOption = (select, value) => {
+        const trimmed = String(value || "").trim();
+        if (!trimmed) return false;
+        const exists = Array.from(select.options).some(
+          (option) => option.value.toLowerCase() === trimmed.toLowerCase()
+        );
+        if (!exists) {
+          const option = document.createElement("option");
+          option.value = trimmed;
+          option.textContent = trimmed;
+          select.appendChild(option);
+        }
+        select.value = trimmed;
+        return true;
+      };
+
       const getDateSortValue = (value, direction) => {
         if (!value) {
           return direction === "asc" ? Infinity : -Infinity;
@@ -1119,6 +1165,9 @@
                 <button class="icon-btn check" data-action="today" data-id="${recipe.id}" title="Set to today" aria-label="Set last made to today">
                   ✓
                 </button>
+                <button class="icon-btn favorite" data-action="favorite" data-id="${recipe.id}" title="Toggle favorite" aria-label="Toggle favorite">
+                  ★
+                </button>
                 <button class="icon-btn dots" data-action="details" data-id="${recipe.id}" title="Details" aria-label="View details">
                   ⋯
                 </button>
@@ -1145,6 +1194,9 @@
             <div class="row-actions">
               <button class="icon-btn check" data-action="today" data-id="${recipe.id}" title="Set to today" aria-label="Set last made to today">
                 ✓
+              </button>
+              <button class="icon-btn favorite" data-action="favorite" data-id="${recipe.id}" title="Toggle favorite" aria-label="Toggle favorite">
+                ★
               </button>
               <button class="icon-btn dots" data-action="details" data-id="${recipe.id}" title="Details" aria-label="View details">
                 ⋯
@@ -1223,6 +1275,14 @@
         if (action === "details") {
           openDetailDialog(id);
         }
+        if (action === "favorite") {
+          const recipe = recipes.find((item) => item.id === id);
+          if (recipe) {
+            recipe.category = recipe.category === "favorite" ? "idea" : "favorite";
+            void saveRecipes();
+            refresh();
+          }
+        }
         if (action === "queue") {
           const recipe = recipes.find((item) => item.id === id);
           if (recipe) {
@@ -1255,6 +1315,7 @@
       const openNew = document.getElementById("open-new");
       const newClose = document.getElementById("new-close");
       const newCancel = document.getElementById("new-cancel");
+      const newCountryAdd = document.getElementById("new-country-add");
 
       const closeNewDialog = () => {
         newDialog.close();
@@ -1268,6 +1329,12 @@
 
       newClose.addEventListener("click", closeNewDialog);
       newCancel.addEventListener("click", closeNewDialog);
+      newCountryAdd.addEventListener("click", () => {
+        const select = document.getElementById("new-country");
+        const name = window.prompt("Add a country name:");
+        if (!name) return;
+        addCountryOption(select, name);
+      });
 
       addForm.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -1299,6 +1366,7 @@
       const detailDialog = document.getElementById("detail-dialog");
       const detailSave = document.getElementById("detail-save");
       const detailDelete = document.getElementById("detail-delete");
+      const detailCountryAdd = document.getElementById("detail-country-add");
 
       const openDetailDialog = (id) => {
         const recipe = recipes.find((item) => item.id === id);
@@ -1348,6 +1416,13 @@
         void saveRecipes({ force: true });
         detailDialog.close();
         refresh();
+      });
+
+      detailCountryAdd.addEventListener("click", () => {
+        const select = document.getElementById("detail-country");
+        const name = window.prompt("Add a country name:");
+        if (!name) return;
+        addCountryOption(select, name);
       });
 
       const init = async () => {
