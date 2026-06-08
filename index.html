@@ -371,6 +371,10 @@
         border-bottom-color: var(--coral);
       }
 
+      .recipe-name-link {
+        cursor: pointer;
+      }
+
       .btn.danger {
         background: #f8d4c7;
         color: #5a1f12;
@@ -1035,7 +1039,11 @@
         }
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
-          base = base.filter((recipe) => recipe.name.toLowerCase().includes(query));
+          base = base.filter((recipe) =>
+            [recipe.name, recipe.country, recipe.briefDescription, recipe.fullRecipe, recipe.link]
+              .filter(Boolean)
+              .some((field) => field.toLowerCase().includes(query))
+          );
         }
         return sortRecipes(base);
       };
@@ -1140,7 +1148,7 @@
         if (link) {
           return `<a class="recipe-name" href="${escapeHtml(link)}" target="_blank" rel="noopener"${titleAttr}>${name}</a>`;
         }
-        return `<span class="recipe-name"${titleAttr}>${name}</span>`;
+        return `<span class="recipe-name recipe-name-link" data-action="details" data-id="${recipe.id}"${titleAttr}>${name}</span>`;
       };
 
       const renderRecipes = () => {
@@ -1171,11 +1179,9 @@
                 <button class="icon-btn dots" data-action="details" data-id="${recipe.id}" title="Details" aria-label="View details">
                   ⋯
                 </button>
-                <button class="icon-btn queue" data-action="queue" data-id="${recipe.id}" title="Add to queue" aria-label="Add to queue">
-                  +
-                </button>
-                <button class="icon-btn unqueue" data-action="unqueue" data-id="${recipe.id}" title="Remove from queue" aria-label="Remove from queue">
-                  -
+                <button class="icon-btn ${recipe.queued ? "unqueue" : "queue"}" data-action="togglequeue" data-id="${recipe.id}" title="${recipe.queued ? "Remove from queue" : "Add to queue"}" aria-label="${recipe.queued ? "Remove from queue" : "Add to queue"}">
+                  <span style="display:${recipe.queued ? "none" : "inline"}">+</span>
+                  <span style="display:${recipe.queued ? "inline" : "none"}">-</span>
                 </button>
                 <button class="icon-btn delete" data-action="delete" data-id="${recipe.id}" title="Delete" aria-label="Delete recipe">
                   ×
@@ -1201,11 +1207,9 @@
               <button class="icon-btn dots" data-action="details" data-id="${recipe.id}" title="Details" aria-label="View details">
                 ⋯
               </button>
-              <button class="icon-btn queue" data-action="queue" data-id="${recipe.id}" title="Add to queue" aria-label="Add to queue">
-                +
-              </button>
-              <button class="icon-btn unqueue" data-action="unqueue" data-id="${recipe.id}" title="Remove from queue" aria-label="Remove from queue">
-                -
+              <button class="icon-btn ${recipe.queued ? "unqueue" : "queue"}" data-action="togglequeue" data-id="${recipe.id}" title="${recipe.queued ? "Remove from queue" : "Add to queue"}" aria-label="${recipe.queued ? "Remove from queue" : "Add to queue"}">
+                <span style="display:${recipe.queued ? "none" : "inline"}">+</span>
+                <span style="display:${recipe.queued ? "inline" : "none"}">-</span>
               </button>
               <button class="icon-btn delete" data-action="delete" data-id="${recipe.id}" title="Delete" aria-label="Delete recipe">
                 ×
@@ -1283,18 +1287,10 @@
             refresh();
           }
         }
-        if (action === "queue") {
+        if (action === "togglequeue") {
           const recipe = recipes.find((item) => item.id === id);
           if (recipe) {
-            recipe.queued = true;
-            void saveRecipes();
-            refresh();
-          }
-        }
-        if (action === "unqueue") {
-          const recipe = recipes.find((item) => item.id === id);
-          if (recipe) {
-            recipe.queued = false;
+            recipe.queued = !recipe.queued;
             void saveRecipes();
             refresh();
           }
