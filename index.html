@@ -313,6 +313,21 @@
         letter-spacing: 0.08em;
       }
 
+      .filter-trigger {
+        border: none;
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        text-transform: inherit;
+        letter-spacing: inherit;
+      }
+
+      .filter-trigger:hover {
+        color: var(--ink-900);
+      }
+
       .filter select {
         min-width: 180px;
       }
@@ -581,6 +596,14 @@
         min-height: 100vh;
         border-radius: 0;
         padding: 32px 24px 40px;
+        overflow: auto;
+      }
+
+      .country-summary-modal {
+        background:
+          radial-gradient(circle at top right, rgba(243, 143, 109, 0.14), transparent 32%),
+          radial-gradient(circle at bottom left, rgba(125, 139, 104, 0.12), transparent 28%),
+          linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(247, 242, 234, 0.96));
       }
 
       .modal-header {
@@ -601,6 +624,32 @@
         justify-content: flex-end;
         gap: 10px;
         margin-top: 6px;
+      }
+
+      .summary-wrap {
+        display: grid;
+        gap: 16px;
+        overflow: auto;
+      }
+
+      .summary-table {
+        min-width: 620px;
+      }
+
+      .country-summary-link {
+        border: none;
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-color: rgba(63, 59, 63, 0.35);
+        text-underline-offset: 0.15em;
+      }
+
+      .country-summary-link:hover {
+        text-decoration-color: var(--coral);
       }
 
       @media (max-width: 960px) {
@@ -655,10 +704,10 @@
               <button class="tab" data-tab="suggested" data-label="Suggested">Suggested (0)</button>
             </div>
             <div class="table-controls">
-              <label class="filter" for="country-filter">
-                Country
-                <select id="country-filter"></select>
-              </label>
+              <div class="filter">
+                <button class="filter-trigger" id="country-summary-open" type="button" aria-label="Open country summary">Country</button>
+                <select id="country-filter" aria-label="Country filter"></select>
+              </div>
               <div class="note" id="tab-note">
                 Sorted by most recent last-made date.
               </div>
@@ -797,6 +846,30 @@
       </form>
     </dialog>
 
+    <dialog id="country-summary-dialog" class="fullscreen">
+      <div class="modal fullscreen country-summary-modal">
+        <div class="modal-header">
+          <div>
+            <h3>Country Summary</h3>
+          </div>
+          <button class="btn ghost" id="country-summary-close" type="button">Close</button>
+        </div>
+        <div class="summary-wrap">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Country Name</th>
+                <th>Total Times</th>
+                <th>Last Made</th>
+              </tr>
+            </thead>
+            <tbody id="country-summary-body"></tbody>
+          </table>
+          <div class="empty" id="country-summary-empty" hidden>No country data yet.</div>
+        </div>
+      </div>
+    </dialog>
+
     <script>
       const STORAGE_KEY = "recipe-atlas-data-v1";
       const S3_URL = `${window.location.origin}/data/rtracker.json`;
@@ -923,6 +996,11 @@
         sortButtons: document.querySelectorAll(".sort-btn"),
         sortIndicators: document.querySelectorAll("[data-indicator]"),
         nameSearch: document.getElementById("name-search"),
+        countrySummaryOpen: document.getElementById("country-summary-open"),
+        countrySummaryDialog: document.getElementById("country-summary-dialog"),
+        countrySummaryBody: document.getElementById("country-summary-body"),
+        countrySummaryEmpty: document.getElementById("country-summary-empty"),
+        countrySummaryClose: document.getElementById("country-summary-close"),
       };
 
       const saveRecipes = async (options = {}) => {
@@ -1019,6 +1097,41 @@
           return days > olderThan;
         });
         return suggested;
+      };
+
+      const getMadeCount = (recipe) => {
+        const rawMadeTimes = Number(recipe.madeTimes);
+        if (Number.isFinite(rawMadeTimes) && rawMadeTimes > 0) {
+          return rawMadeTimes;
+        }
+        return recipe.lastMade ? 1 : 0;
+      };
+
+      const getCountrySummary = () => {
+        const summary = new Map();
+        for (const recipe of recipes) {
+          const country = String(recipe.country || "").trim();
+          if (!country) continue;
+          const current = summary.get(country) || {
+            country,
+            totalTimes: 0,
+            lastMade: "",
+          };
+          current.totalTimes += getMadeCount(recipe);
+          if (recipe.lastMade && (!current.lastMade || recipe.lastMade > current.lastMade)) {
+            current.lastMade = recipe.lastMade;
+          }
+          summary.set(country, current);
+        }
+        return Array.from(summary.values()).sort((a, b) => {
+          if (b.totalTimes !== a.totalTimes) return b.totalTimes - a.totalTimes;
+          if (a.lastMade !== b.lastMade) {
+            if (!a.lastMade) return 1;
+            if (!b.lastMade) return -1;
+            return b.lastMade.localeCompare(a.lastMade);
+          }
+          return a.country.localeCompare(b.country);
+        });
       };
 
       const getVisibleRecipes = () => {
@@ -1133,6 +1246,54 @@
         });
       };
 
+      const setActiveTab = (tab) => {
+        activeTab = tab;
+        elements.tabButtons.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.tab === activeTab);
+        });
+      };
+
+      const applyCountryFilter = (country) => {
+        filterCountry = country;
+        elements.countryFilter.value = country;
+      };
+
+      const renderCountrySummary = () => {
+        const summary = getCountrySummary();
+        elements.countrySummaryBody.innerHTML = "";
+        elements.countrySummaryEmpty.hidden = summary.length > 0;
+        if (!summary.length) return;
+        for (const rowData of summary) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>
+              <button class="country-summary-link" type="button" data-country="${escapeHtml(rowData.country)}">
+                ${escapeHtml(rowData.country)}
+              </button>
+            </td>
+            <td>${rowData.totalTimes}</td>
+            <td>${formatDate(rowData.lastMade)}</td>
+          `;
+          elements.countrySummaryBody.appendChild(row);
+        }
+      };
+
+      const openCountrySummary = () => {
+        renderCountrySummary();
+        elements.countrySummaryDialog.showModal();
+      };
+
+      elements.countrySummaryBody.addEventListener("click", (event) => {
+        const target = event.target.closest("[data-country]");
+        if (!target) return;
+        const country = target.dataset.country;
+        if (!country) return;
+        elements.countrySummaryDialog.close();
+        setActiveTab("all");
+        applyCountryFilter(country);
+        refresh();
+      });
+
       const getFavoriteMark = (recipe) => {
         if (recipe.category !== "favorite") return "";
         return '<span class="favorite-mark" aria-label="favorite">★</span>';
@@ -1230,9 +1391,7 @@
 
       elements.tabButtons.forEach((button) => {
         button.addEventListener("click", () => {
-          activeTab = button.dataset.tab;
-          elements.tabButtons.forEach((btn) => btn.classList.remove("active"));
-          button.classList.add("active");
+          setActiveTab(button.dataset.tab);
           refresh();
         });
       });
@@ -1258,6 +1417,11 @@
       elements.nameSearch.addEventListener("input", (event) => {
         searchQuery = event.target.value.trim();
         refresh();
+      });
+
+      elements.countrySummaryOpen.addEventListener("click", openCountrySummary);
+      elements.countrySummaryClose.addEventListener("click", () => {
+        elements.countrySummaryDialog.close();
       });
 
       document.getElementById("table-wrapper").addEventListener("click", (event) => {
@@ -1352,10 +1516,7 @@
         });
         void saveRecipes();
         closeNewDialog();
-        activeTab = "all";
-        elements.tabButtons.forEach((btn) => {
-          btn.classList.toggle("active", btn.dataset.tab === activeTab);
-        });
+        setActiveTab("all");
         refresh();
       });
 
