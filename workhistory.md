@@ -9,3 +9,4 @@
 - Added explicit accessibility labels for the country summary trigger and country filter select after replacing the original label element.
 - Removed the explanatory summary note from the country summary header and restored the summary modal's themed background treatment.
 - Made country names in the summary clickable so they close the modal, switch to the `All` tab, and apply the selected country filter.
+- Fixed the mobile breakpoint so the country summary table stays visible on small screens instead of inheriting the recipe-table hide rule.
